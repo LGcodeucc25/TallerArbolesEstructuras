@@ -1,0 +1,56 @@
+{% macro level_badge(level) %}
+  {% if level %}
+    <span class="badge level-{{ level.number }}">N{{ level.number }} · {{ level.name }}</span>
+  {% else %}
+    <span class="badge badge-muted">Sin clasificar</span>
+  {% endif %}
+{% endmacro %}
+
+{% macro status_pill(patient) %}
+  <span class="status status-{{ patient.status }}">{{ patient.status_label() }}</span>
+{% endmacro %}
+
+{% macro tree_svg(drawing) %}
+  {% if drawing.root %}
+  <div class="tree-scroll">
+    <svg class="tree-svg" width="{{ drawing.width }}" height="{{ drawing.height }}" viewBox="0 0 {{ drawing.width }} {{ drawing.height }}" role="img" aria-label="{{ drawing.title }}">
+      <defs>
+        <marker id="arrow-{{ drawing.key }}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0 0L10 5L0 10z" class="arrow-head"/>
+        </marker>
+      </defs>
+      {% for child in drawing.edges() %}
+        {% set x1 = child.parent.x %}
+        {% set y1 = child.parent.y + drawing.node_height / 2 %}
+        {% set x2 = child.x %}
+        {% set y2 = child.y - drawing.node_height / 2 - 2 %}
+        <line class="edge {% if child.highlight and child.parent.highlight %}edge-active{% endif %}" x1="{{ x1 }}" y1="{{ y1 }}" x2="{{ x2 }}" y2="{{ y2 }}" marker-end="url(#arrow-{{ drawing.key }})"/>
+        {% if child.edge_label %}
+          <text class="edge-label" x="{{ (x1 + x2) / 2 }}" y="{{ (y1 + y2) / 2 }}" text-anchor="middle" dy="4">{{ child.edge_label }}</text>
+        {% endif %}
+      {% endfor %}
+      {% for node in drawing.nodes() %}
+        <g class="tree-node node-{{ node.kind }} {% if node.highlight %}node-highlight{% endif %}" transform="translate({{ node.x - drawing.node_width / 2 }}, {{ node.y - drawing.node_height / 2 }})">
+          <title>{{ node.kind_label() }} · {{ node.title }}</title>
+          <rect width="{{ drawing.node_width }}" height="{{ drawing.node_height }}" rx="12"/>
+          {% if node.accent %}
+            <circle class="accent" cx="{{ drawing.node_width - 9 }}" cy="9" r="5" fill="{{ node.accent }}"/>
+          {% endif %}
+          <text class="node-label" x="{{ drawing.node_width / 2 }}" y="19" text-anchor="middle">{{ node.label }}</text>
+          <text class="node-sub" x="{{ drawing.node_width / 2 }}" y="34" text-anchor="middle">{{ node.sublabel }}</text>
+        </g>
+      {% endfor %}
+    </svg>
+  </div>
+  {% else %}
+    <div class="empty">El árbol está vacío.</div>
+  {% endif %}
+{% endmacro %}
+
+{% macro tree_legend() %}
+  <div class="legend">
+    <span><i class="swatch swatch-root"></i>Raíz</span>
+    <span><i class="swatch swatch-branch"></i>Rama</span>
+    <span><i class="swatch swatch-leaf"></i>Hoja</span>
+  </div>
+{% endmacro %}

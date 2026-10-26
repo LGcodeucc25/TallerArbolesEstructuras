@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% from "_macros.html" import level_badge %}
+{% block title %}Cola de atención{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Cola de atención</h1>
+    <p class="muted">Orden de atención por gravedad; en empate, por orden de llegada (recorrido inorden del árbol de prioridad).</p>
+  </div>
+  <form method="post" action="{{ url_for('attend_next') }}">
+    <button class="btn btn-primary btn-lg" type="submit" {% if not next_node %}disabled{% endif %}>
+      <svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg> Atender siguiente
+    </button>
+  </form>
+</div>
+
+<div class="queue-summary">
+  {% for item in service.level_counts() %}
+    <span class="summary-chip level-border-{{ item.level.number }}"><i class="level-dot level-bg-{{ item.level.number }}"></i>{{ item.level.name }}</span>
+  {% endfor %}
+  <span class="muted small">{{ service.waiting_count() }} pacientes en espera</span>
+</div>
+
+<section class="board">
+  {% for node in service.queue.attention_order() %}
+    {% set p = node.patient %}
+    {% set level = p.level() %}
+    <article class="board-row level-border-{{ level.number }} {% if loop.first %}board-next{% endif %}">
+      <span class="board-pos">{{ loop.index }}</span>
+      <div class="avatar level-bg-{{ level.number }}">{{ p.initials() }}</div>
+      <div class="board-patient">
+        <a href="{{ url_for('patient_detail', document_id=p.document_id) }}"><strong>{{ p.full_name }}</strong></a>
+        <span class="muted small">CC {{ p.document_id }} · {{ p.age }} años · Llegada #{{ p.arrival_number }} ({{ p.arrival_time.strftime('%H:%M') }})</span>
+        <span class="symptoms">{{ p.symptoms }}</span>
+      </div>
+      <div class="board-level">
+        {{ level_badge(level) }}
+        <span class="muted small">{{ level.label }}</span>
+      </div>
+      <div class="board-time">
+        <span class="wait {% if p.is_overdue() %}overdue{% endif %}">{{ p.wait_text() }}</span>
+        <span class="muted small">Máx. {{ level.max_wait_text }}</span>
+      </div>
+      {% if loop.first %}<span class="next-tag">Siguiente</span>{% endif %}
+    </article>
+  {% else %}
+    <div class="card empty">
+      <p>No hay pacientes en espera.</p>
+      <a class="btn btn-primary" href="{{ url_for('admit') }}">Registrar ingreso</a>
+    </div>
+  {% endfor %}
+</section>
+{% endblock %}

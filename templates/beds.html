@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}Mapa de camas{% endblock %}
+{% block content %}
+{% set root = hospital.root %}
+{% set root_pct = hospital.occupancy_percent(root) %}
+<div class="page-head">
+  <div>
+    <h1>Mapa de camas</h1>
+    <p class="muted">Árbol de la infraestructura: Hospital → Pisos → Áreas → Camas. La ocupación se suma desde las camas hacia arriba.</p>
+  </div>
+  <div class="legend">
+    <span><i class="swatch swatch-free"></i>Libre</span>
+    <span><i class="swatch swatch-busy"></i>Ocupada</span>
+  </div>
+</div>
+
+<section class="card hospital-card">
+  <div class="hospital-head">
+    <div>
+      <span class="kind-tag">Hospital · nivel {{ hospital.level_of(root) }}</span>
+      <h2>{{ root.name }}</h2>
+    </div>
+    <div class="occ-summary">
+      <span class="occ-value">{{ hospital.count_occupied(root) }}/{{ hospital.count_beds(root) }}</span>
+      <div class="bar"><span class="bar-fill {% if root_pct >= 80 %}bar-high{% elif root_pct >= 50 %}bar-mid{% endif %}" style="width: {{ root_pct }}%"></span></div>
+      <span class="muted small">{{ root_pct }}% de ocupación</span>
+    </div>
+  </div>
+
+  {% for floor in hospital.children(root) %}
+    {% set floor_pct = hospital.occupancy_percent(floor) %}
+    <details class="floor" open>
+      <summary>
+        <span class="chevron"></span>
+        <span class="kind-tag">Piso · nivel {{ hospital.level_of(floor) }}</span>
+        <strong>{{ floor.name }}</strong>
+        <span class="summary-bar">
+          <span class="bar"><span class="bar-fill {% if floor_pct >= 80 %}bar-high{% elif floor_pct >= 50 %}bar-mid{% endif %}" style="width: {{ floor_pct }}%"></span></span>
+          <span class="small">{{ hospital.count_occupied(floor) }}/{{ hospital.count_beds(floor) }} · {{ floor_pct }}%</span>
+        </span>
+      </summary>
+      <div class="areas">
+        {% for area in hospital.children(floor) %}
+          {% set area_pct = hospital.occupancy_percent(area) %}
+          <details class="area" open>
+            <summary>
+              <span class="chevron"></span>
+              <strong>{{ area.name }}</strong>
+              <span class="summary-bar">
+                <span class="bar"><span class="bar-fill {% if area_pct >= 80 %}bar-high{% elif area_pct >= 50 %}bar-mid{% endif %}" style="width: {{ area_pct }}%"></span></span>
+                <span class="small">{{ hospital.count_occupied(area) }}/{{ hospital.count_beds(area) }}</span>
+              </span>
+            </summary>
+            <div class="bed-grid">
+              {% for bed in hospital.children(area) %}
+                {% if bed.patient %}
+                  <a class="bed bed-busy" href="{{ url_for('patient_detail', document_id=bed.patient.document_id) }}" title="{{ bed.patient.full_name }}">
+                    <span class="bed-code">{{ bed.name }}</span>
+                    <span class="bed-initials level-bg-{{ bed.patient.triage_level }}">{{ bed.patient.initials() }}</span>
+                    <span class="bed-patient">{{ bed.patient.short_name() }}</span>
+                  </a>
+                {% else %}
+                  <div class="bed bed-free">
+                    <span class="bed-code">{{ bed.name }}</span>
+                    <svg viewBox="0 0 24 24"><path d="M3 18V7M3 14h18v4M21 14v-2a3 3 0 0 0-3-3h-7v5"/><circle cx="7" cy="11" r="2"/></svg>
+                    <span class="bed-patient">Libre</span>
+                  </div>
+                {% endif %}
+              {% endfor %}
+            </div>
+          </details>
+        {% endfor %}
+      </div>
+    </details>
+  {% endfor %}
+</section>
+{% endblock %}

@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Admisión{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Admisión de paciente</h1>
+    <p class="muted">Registre los datos básicos. Si el documento ya existe, se actualizan sus datos en el registro.</p>
+  </div>
+</div>
+
+<div class="admit-layout">
+  <section class="card">
+    <div class="steps">
+      <span class="step-item done"><b>1</b> Datos del paciente</span>
+      <span class="step-sep"></span>
+      <span class="step-item"><b>2</b> Triage guiado</span>
+      <span class="step-sep"></span>
+      <span class="step-item"><b>3</b> Cola de atención</span>
+    </div>
+    <form method="post" action="{{ url_for('admit') }}" class="form">
+      <div class="form-row">
+        <label class="field">
+          <span>Documento de identidad (cédula)</span>
+          <input type="text" name="document_id" inputmode="numeric" maxlength="12" required placeholder="Ej. 1020304050"
+                 value="{% if form %}{{ form.get('document_id', '') }}{% elif previous %}{{ previous.document_id }}{% endif %}">
+        </label>
+        <label class="field field-small">
+          <span>Edad</span>
+          <input type="number" name="age" min="0" max="120" required placeholder="Años"
+                 value="{% if form %}{{ form.get('age', '') }}{% elif previous %}{{ previous.age }}{% endif %}">
+        </label>
+      </div>
+      <label class="field">
+        <span>Nombre completo</span>
+        <input type="text" name="full_name" required placeholder="Nombres y apellidos"
+               value="{% if form %}{{ form.get('full_name', '') }}{% elif previous %}{{ previous.full_name }}{% endif %}">
+      </label>
+      <label class="field">
+        <span>Motivo de consulta / síntomas</span>
+        <textarea name="symptoms" rows="4" required placeholder="Describa brevemente los síntomas">{% if form %}{{ form.get('symptoms', '') }}{% endif %}</textarea>
+      </label>
+      <div class="form-actions">
+        <a class="btn btn-ghost" href="{{ url_for('dashboard') }}">Cancelar</a>
+        <button class="btn btn-primary" type="submit">Registrar e iniciar triage →</button>
+      </div>
+    </form>
+  </section>
+
+  <aside class="card card-soft">
+    <h2>Niveles de triage</h2>
+    <p class="muted small">Sistema Manchester adoptado por la Resolución 5596 de 2015 del Ministerio de Salud.</p>
+    <div class="level-guide">
+      {% for level in all_levels() %}
+        <div class="level-guide-item level-border-{{ level.number }}">
+          <span class="badge level-{{ level.number }}">N{{ level.number }}</span>
+          <div><strong>{{ level.name }} · {{ level.label }}</strong><span class="muted small">Atención: {{ level.max_wait_text }}</span></div>
+        </div>
+      {% endfor %}
+    </div>
+  </aside>
+</div>
+{% endblock %}

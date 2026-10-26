@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% from "_macros.html" import level_badge %}
+{% block title %}Panel general{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Panel general</h1>
+    <p class="muted">Estado del servicio de urgencias en tiempo real.</p>
+  </div>
+  <a class="btn btn-primary" href="{{ url_for('admit') }}">
+    <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg> Nuevo ingreso
+  </a>
+</div>
+
+<section class="kpis">
+  <div class="kpi">
+    <span class="kpi-icon icon-amber"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
+    <div><span class="kpi-value">{{ service.waiting_count() }}</span><span class="kpi-label">En espera</span></div>
+  </div>
+  <div class="kpi">
+    <span class="kpi-icon icon-teal"><svg viewBox="0 0 24 24"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg></span>
+    <div><span class="kpi-value">{{ service.count_by_status(STATUS_IN_CARE) }}</span><span class="kpi-label">En atención</span></div>
+  </div>
+  <div class="kpi">
+    <span class="kpi-icon icon-green"><svg viewBox="0 0 24 24"><path d="M3 18V7M3 14h18v4M21 14v-2a3 3 0 0 0-3-3h-7v5"/></svg></span>
+    <div><span class="kpi-value">{{ service.free_beds() }}<small>/{{ service.total_beds() }}</small></span><span class="kpi-label">Camas libres</span></div>
+  </div>
+  <div class="kpi">
+    <span class="kpi-icon icon-red"><svg viewBox="0 0 24 24"><path d="M3 18V7M3 14h18v4M21 14v-2a3 3 0 0 0-3-3h-7v5"/><circle cx="7" cy="11" r="2"/></svg></span>
+    <div><span class="kpi-value">{{ service.occupied_beds() }}</span><span class="kpi-label">Camas ocupadas</span></div>
+  </div>
+  <div class="kpi">
+    <span class="kpi-icon icon-blue"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="4"/><path d="M2 21c0-4 3-7 7-7s7 3 7 7M16 4a4 4 0 0 1 0 8M22 21c0-3-2-6-5-7"/></svg></span>
+    <div><span class="kpi-value">{{ service.registered_count() }}</span><span class="kpi-label">Pacientes registrados</span></div>
+  </div>
+</section>
+
+<div class="grid-2">
+  <section class="card">
+    <div class="card-head">
+      <h2>Próximo paciente a atender</h2>
+      <a class="link" href="{{ url_for('queue') }}">Ver cola →</a>
+    </div>
+    {% if next_node %}
+      {% set p = next_node.patient %}
+      <div class="next-patient level-border-{{ next_node.triage_level }}">
+        <div class="avatar level-bg-{{ next_node.triage_level }}">{{ p.initials() }}</div>
+        <div class="next-info">
+          <strong>{{ p.full_name }}</strong>
+          <span class="muted">CC {{ p.document_id }} · {{ p.age }} años</span>
+          <span class="symptoms">{{ p.symptoms }}</span>
+        </div>
+        <div class="next-meta">
+          {{ level_badge(p.level()) }}
+          <span class="wait {% if p.is_overdue() %}overdue{% endif %}">Espera {{ p.wait_text() }}</span>
+        </div>
+      </div>
+      <form method="post" action="{{ url_for('attend_next') }}" class="mt">
+        <button class="btn btn-primary btn-block" type="submit">Atender siguiente paciente</button>
+      </form>
+    {% else %}
+      <div class="empty">No hay pacientes en espera.</div>
+    {% endif %}
+  </section>
+
+  <section class="card">
+    <div class="card-head"><h2>Pacientes activos por nivel de triage</h2></div>
+    <div class="level-counts">
+      {% for item in service.level_counts() %}
+        <div class="level-count level-border-{{ item.level.number }}">
+          <span class="level-dot level-bg-{{ item.level.number }}"></span>
+          <div class="level-count-text">
+            <strong>Nivel {{ item.level.number }} · {{ item.level.name }}</strong>
+            <span class="muted">{{ item.level.label }} · {{ item.level.max_wait_text }}</span>
+          </div>
+          <span class="level-count-value">{{ item.count }}</span>
+        </div>
+      {% endfor %}
+    </div>
+  </section>
+</div>
+
+<section class="card">
+  <div class="card-head">
+    <h2>Ocupación por área</h2>
+    <a class="link" href="{{ url_for('beds') }}">Mapa de camas →</a>
+  </div>
+  <div class="occupancy-list">
+    {% for area in service.areas() %}
+      {% set pct = service.hospital.occupancy_percent(area) %}
+      <div class="occupancy-row">
+        <span class="occupancy-name">{{ area.name }} <small class="muted">{{ area.parent.name }}</small></span>
+        <div class="bar"><span class="bar-fill {% if pct >= 80 %}bar-high{% elif pct >= 50 %}bar-mid{% endif %}" style="width: {{ pct }}%"></span></div>
+        <span class="occupancy-value">{{ service.hospital.count_occupied(area) }}/{{ service.hospital.count_beds(area) }} · {{ pct }}%</span>
+      </div>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}
