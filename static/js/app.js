@@ -1,4 +1,4 @@
-// Live clock, current shift, sidebar toggle and dismissible messages.
+// Live clock, current shift, collapsible sidebar and auto-dismissing toasts.
 (function () {
   var clock = document.getElementById("clock");
   var shift = document.getElementById("shift");
@@ -24,15 +24,30 @@
 
   var toggle = document.getElementById("menu-toggle");
   var sidebar = document.getElementById("sidebar");
-  if (toggle && sidebar) {
+  var backdrop = document.getElementById("backdrop");
+
+  function setMenu(open) {
+    sidebar.classList.toggle("open", open);
+    backdrop.classList.toggle("show", open);
+  }
+
+  if (toggle && sidebar && backdrop) {
     toggle.addEventListener("click", function () {
-      sidebar.classList.toggle("open");
+      setMenu(!sidebar.classList.contains("open"));
+    });
+    backdrop.addEventListener("click", function () {
+      setMenu(false);
     });
   }
 
-  document.querySelectorAll(".flash-close").forEach(function (button) {
-    button.addEventListener("click", function () {
-      button.parentElement.remove();
-    });
+  function dismiss(toast) {
+    toast.classList.add("hide");
+    setTimeout(function () { toast.remove(); }, 200);
+  }
+
+  document.querySelectorAll(".toast").forEach(function (toast) {
+    var close = toast.querySelector(".toast-close");
+    if (close) close.addEventListener("click", function () { dismiss(toast); });
+    setTimeout(function () { dismiss(toast); }, 6000);
   });
 })();

@@ -1,50 +1,68 @@
 {% extends "base.html" %}
-{% from "_macros.html" import level_badge %}
+{% from "_macros.html" import icon, level_badge, empty_state %}
 {% block title %}Panel general{% endblock %}
 {% block content %}
-<div class="page-head">
-  <div>
-    <h1>Panel general</h1>
-    <p class="muted">Estado del servicio de urgencias en tiempo real.</p>
+<section class="hero">
+  <div class="hero-text">
+    <span class="hero-date">{{ icon("calendar") }} {{ today_text|capitalize }}</span>
+    <h1>{{ greeting }}, turno de urgencias</h1>
+    <p>Hay <strong>{{ service.waiting_count() }}</strong> pacientes en espera y <strong>{{ service.free_beds() }}</strong> camas libres en el {{ hospital_name }}.</p>
+    <div class="hero-actions">
+      <a class="btn btn-white" href="{{ url_for('admit') }}">{{ icon("user-plus") }} Registrar paciente</a>
+      <a class="btn btn-glass" href="{{ url_for('queue') }}">{{ icon("clock") }} Ver cola</a>
+    </div>
   </div>
-  <a class="btn btn-primary" href="{{ url_for('admit') }}">
-    <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg> Nuevo ingreso
-  </a>
-</div>
+  <svg class="hero-art" viewBox="0 0 240 200" aria-hidden="true">
+    <circle cx="130" cy="100" r="92" fill="#fff" opacity=".08"/>
+    <circle cx="130" cy="100" r="66" fill="#fff" opacity=".10"/>
+    <rect x="86" y="44" width="88" height="112" rx="16" fill="#fff" opacity=".95"/>
+    <rect x="110" y="34" width="40" height="20" rx="8" fill="#C9CDF7"/>
+    <path d="M122 70h16v14h14v16h-14v14h-16v-14h-14V84h14z" fill="#5B65DC"/>
+    <rect x="102" y="128" width="56" height="6" rx="3" fill="#E3E5F5"/>
+    <rect x="102" y="140" width="38" height="6" rx="3" fill="#E3E5F5"/>
+    <path d="M40 60v22a24 24 0 0 0 48 0V60" fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round"/>
+    <path d="M64 106v18a36 36 0 0 0 72 6" fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round" opacity=".9"/>
+    <circle cx="40" cy="56" r="7" fill="#fff"/>
+    <circle cx="88" cy="56" r="7" fill="#fff"/>
+    <circle cx="190" cy="150" r="18" fill="#fff"/>
+    <circle cx="190" cy="150" r="8" fill="#5B65DC"/>
+    <path d="M140 136a40 40 0 0 0 32 10" fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round"/>
+  </svg>
+</section>
 
 <section class="kpis">
   <div class="kpi">
-    <span class="kpi-icon icon-amber"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
+    <span class="kpi-icon">{{ icon("clock") }}</span>
     <div><span class="kpi-value">{{ service.waiting_count() }}</span><span class="kpi-label">En espera</span></div>
   </div>
   <div class="kpi">
-    <span class="kpi-icon icon-teal"><svg viewBox="0 0 24 24"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg></span>
+    <span class="kpi-icon">{{ icon("pulse") }}</span>
     <div><span class="kpi-value">{{ service.count_by_status(STATUS_IN_CARE) }}</span><span class="kpi-label">En atención</span></div>
   </div>
   <div class="kpi">
-    <span class="kpi-icon icon-green"><svg viewBox="0 0 24 24"><path d="M3 18V7M3 14h18v4M21 14v-2a3 3 0 0 0-3-3h-7v5"/></svg></span>
+    <span class="kpi-icon">{{ icon("bed") }}</span>
     <div><span class="kpi-value">{{ service.free_beds() }}<small>/{{ service.total_beds() }}</small></span><span class="kpi-label">Camas libres</span></div>
   </div>
   <div class="kpi">
-    <span class="kpi-icon icon-red"><svg viewBox="0 0 24 24"><path d="M3 18V7M3 14h18v4M21 14v-2a3 3 0 0 0-3-3h-7v5"/><circle cx="7" cy="11" r="2"/></svg></span>
+    <span class="kpi-icon">{{ icon("building") }}</span>
     <div><span class="kpi-value">{{ service.occupied_beds() }}</span><span class="kpi-label">Camas ocupadas</span></div>
   </div>
   <div class="kpi">
-    <span class="kpi-icon icon-blue"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="4"/><path d="M2 21c0-4 3-7 7-7s7 3 7 7M16 4a4 4 0 0 1 0 8M22 21c0-3-2-6-5-7"/></svg></span>
-    <div><span class="kpi-value">{{ service.registered_count() }}</span><span class="kpi-label">Pacientes registrados</span></div>
+    <span class="kpi-icon">{{ icon("users") }}</span>
+    <div><span class="kpi-value">{{ service.registered_count() }}</span><span class="kpi-label">Registrados</span></div>
   </div>
 </section>
 
 <div class="grid-2">
   <section class="card">
     <div class="card-head">
-      <h2>Próximo paciente a atender</h2>
-      <a class="link" href="{{ url_for('queue') }}">Ver cola →</a>
+      <h2>{{ icon("stethoscope", "title-icon") }} Próximo paciente</h2>
+      <a class="link" href="{{ url_for('queue') }}">Ver cola {{ icon("arrow-right") }}</a>
     </div>
     {% if next_node %}
       {% set p = next_node.patient %}
       <div class="next-patient level-border-{{ next_node.triage_level }}">
-        <div class="avatar level-bg-{{ next_node.triage_level }}">{{ p.initials() }}</div>
+        <div class="avatar avatar-lg">{{ p.initials() }}</div>
         <div class="next-info">
           <strong>{{ p.full_name }}</strong>
           <span class="muted">CC {{ p.document_id }} · {{ p.age }} años</span>
@@ -52,28 +70,30 @@
         </div>
         <div class="next-meta">
           {{ level_badge(p.level()) }}
-          <span class="wait {% if p.is_overdue() %}overdue{% endif %}">Espera {{ p.wait_text() }}</span>
+          <span class="wait {% if p.is_overdue() %}overdue{% endif %}">{{ icon("clock") }} {{ p.wait_text() }}</span>
         </div>
       </div>
       <form method="post" action="{{ url_for('attend_next') }}" class="mt">
-        <button class="btn btn-primary btn-block" type="submit">Atender siguiente paciente</button>
+        <button class="btn btn-primary btn-block" type="submit">{{ icon("arrow-right") }} Atender siguiente</button>
       </form>
     {% else %}
-      <div class="empty">No hay pacientes en espera.</div>
+      {{ empty_state("No hay pacientes en espera", "La cola de atención está vacía.") }}
     {% endif %}
   </section>
 
   <section class="card">
-    <div class="card-head"><h2>Pacientes activos por nivel de triage</h2></div>
-    <div class="level-counts">
+    <div class="card-head"><h2>{{ icon("pulse", "title-icon") }} Pacientes por nivel de triage</h2></div>
+    {% set ns = namespace(total=0) %}
+    {% for item in service.level_counts() %}{% set ns.total = ns.total + item.count %}{% endfor %}
+    <div class="hbars">
       {% for item in service.level_counts() %}
-        <div class="level-count level-border-{{ item.level.number }}">
-          <span class="level-dot level-bg-{{ item.level.number }}"></span>
-          <div class="level-count-text">
-            <strong>Nivel {{ item.level.number }} · {{ item.level.name }}</strong>
-            <span class="muted">{{ item.level.label }} · {{ item.level.max_wait_text }}</span>
+        {% if ns.total > 0 %}{% set pct = item.count * 100 // ns.total %}{% else %}{% set pct = 0 %}{% endif %}
+        <div class="hbar">
+          <div class="hbar-head">
+            <span class="hbar-name"><i class="level-dot level-bg-{{ item.level.number }}"></i>N{{ item.level.number }} · {{ item.level.name }} <small>{{ item.level.label }}</small></span>
+            <span class="hbar-value">{{ item.count }}</span>
           </div>
-          <span class="level-count-value">{{ item.count }}</span>
+          <div class="bar"><span class="bar-fill level-bg-{{ item.level.number }}" style="width: {{ pct }}%"></span></div>
         </div>
       {% endfor %}
     </div>
@@ -82,16 +102,18 @@
 
 <section class="card">
   <div class="card-head">
-    <h2>Ocupación por área</h2>
-    <a class="link" href="{{ url_for('beds') }}">Mapa de camas →</a>
+    <h2>{{ icon("bed", "title-icon") }} Ocupación por área</h2>
+    <a class="link" href="{{ url_for('beds') }}">Mapa de camas {{ icon("arrow-right") }}</a>
   </div>
-  <div class="occupancy-list">
+  <div class="hbars hbars-2">
     {% for area in service.areas() %}
       {% set pct = service.hospital.occupancy_percent(area) %}
-      <div class="occupancy-row">
-        <span class="occupancy-name">{{ area.name }} <small class="muted">{{ area.parent.name }}</small></span>
-        <div class="bar"><span class="bar-fill {% if pct >= 80 %}bar-high{% elif pct >= 50 %}bar-mid{% endif %}" style="width: {{ pct }}%"></span></div>
-        <span class="occupancy-value">{{ service.hospital.count_occupied(area) }}/{{ service.hospital.count_beds(area) }} · {{ pct }}%</span>
+      <div class="hbar">
+        <div class="hbar-head">
+          <span class="hbar-name">{{ area.name }} <small>{{ area.parent.name }}</small></span>
+          <span class="hbar-value">{{ service.hospital.count_occupied(area) }}/{{ service.hospital.count_beds(area) }} · {{ pct }}%</span>
+        </div>
+        <div class="bar"><span class="bar-fill {% if pct >= 80 %}bar-high{% endif %}" style="width: {{ pct }}%"></span></div>
       </div>
     {% endfor %}
   </div>

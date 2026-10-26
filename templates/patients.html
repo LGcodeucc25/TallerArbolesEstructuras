@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_macros.html" import level_badge, status_pill %}
+{% from "_macros.html" import icon, level_badge, status_pill, empty_state %}
 {% block title %}Pacientes{% endblock %}
 {% block content %}
 <div class="page-head">
@@ -8,9 +8,9 @@
     <p class="muted">Registro ordenado por documento (recorrido inorden del árbol AVL).</p>
   </div>
   <form class="search" method="get" action="{{ url_for('patients_search') }}">
-    <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+    {{ icon("search") }}
     <input type="text" name="document_id" inputmode="numeric" placeholder="Buscar por cédula" value="{{ query }}" required>
-    <button class="btn btn-primary" type="submit">Buscar</button>
+    <button class="btn btn-primary" type="submit">{{ icon("search") }} Buscar</button>
   </form>
 </div>
 
@@ -34,7 +34,7 @@
             <td class="num">{{ p.document_id }}</td>
             <td>
               <div class="cell-patient">
-                <span class="avatar avatar-sm {% if p.triage_level %}level-bg-{{ p.triage_level }}{% endif %}">{{ p.initials() }}</span>
+                <span class="avatar avatar-sm">{{ p.initials() }}</span>
                 <span>{{ p.full_name }}</span>
               </div>
             </td>
@@ -42,10 +42,10 @@
             <td>{{ level_badge(p.level()) }}</td>
             <td>{{ status_pill(p) }}</td>
             <td>{{ p.bed_name or '—' }}</td>
-            <td class="right"><a class="link" href="{{ url_for('patient_detail', document_id=p.document_id) }}">Ver ficha →</a></td>
+            <td class="right"><a class="btn btn-secondary btn-sm" href="{{ url_for('patient_detail', document_id=p.document_id) }}">Ver ficha {{ icon("arrow-right") }}</a></td>
           </tr>
         {% else %}
-          <tr><td colspan="7" class="empty">No hay pacientes registrados.</td></tr>
+          <tr><td colspan="7">{{ empty_state("Sin pacientes", "Aún no hay pacientes registrados.") }}</td></tr>
         {% endfor %}
       </tbody>
     </table>

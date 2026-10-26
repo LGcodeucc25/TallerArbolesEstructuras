@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="static/img/logo.svg" alt="MediTree" width="72">
+</p>
+
 # MediTree Urgencias
 
 Sistema de gestión de urgencias hospitalarias construido en **Python (Flask)** sobre **estructuras de árboles implementadas a mano**.

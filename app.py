@@ -25,12 +25,66 @@ def current_shift(now):
     return "Turno noche · 19:00–07:00"
 
 
+def weekday_name(number):
+    if number == 0:
+        return "lunes"
+    if number == 1:
+        return "martes"
+    if number == 2:
+        return "miércoles"
+    if number == 3:
+        return "jueves"
+    if number == 4:
+        return "viernes"
+    if number == 5:
+        return "sábado"
+    return "domingo"
+
+
+def month_name(number):
+    names = "enero febrero marzo abril mayo junio julio agosto septiembre octubre noviembre diciembre"
+    position = 1
+    word = ""
+    for char in names + " ":
+        if char == " ":
+            if position == number:
+                return word
+            position += 1
+            word = ""
+        else:
+            word += char
+    return ""
+
+
+def spanish_date(now):
+    return weekday_name(now.weekday()) + ", " + str(now.day) + " de " + month_name(now.month) + " de " + str(now.year)
+
+
+def greeting(now):
+    if now.hour < 12:
+        return "Buenos días"
+    if now.hour < 19:
+        return "Buenas tardes"
+    return "Buenas noches"
+
+
+def first_pending_triage():
+    """First patient (by document) still waiting to answer the triage."""
+    for patient in service.registry.patients():
+        if patient.status == STATUS_TRIAGE:
+            return patient
+    return None
+
+
 @app.context_processor
 def inject_globals():
     now = datetime.now()
     return {
         "hospital_name": service.hospital.root.name,
         "now": now,
+        "today_text": spanish_date(now),
+        "greeting": greeting(now),
+        "pending_triage": first_pending_triage(),
         "shift": current_shift(now),
         "level_info": level_info,
         "all_levels": all_levels,

@@ -1,17 +1,25 @@
 {% extends "base.html" %}
-{% from "_macros.html" import tree_svg, tree_legend %}
+{% from "_macros.html" import icon, tree_svg, tree_legend %}
 {% block title %}Estructuras{% endblock %}
+
+{% macro metric(name, label, value) %}
+  <div class="metric">
+    <span class="metric-icon">{{ icon(name) }}</span>
+    <div><span class="label">{{ label }}</span><strong>{{ value }}</strong></div>
+  </div>
+{% endmacro %}
 
 {% macro metrics(drawing) %}
   <div class="metrics">
-    <div class="metric"><span>Raíz</span><strong>{{ drawing.root_label() }}</strong></div>
-    <div class="metric"><span>Altura</span><strong>{{ drawing.tree_height() }}</strong></div>
-    <div class="metric"><span>Niveles</span><strong>{% if drawing.root %}0 – {{ drawing.max_depth }}{% else %}—{% endif %}</strong></div>
-    <div class="metric"><span>Peso</span><strong>{{ drawing.weight() }}</strong></div>
-    <div class="metric"><span>Hojas</span><strong>{{ drawing.leaves() }}</strong></div>
-    <div class="metric"><span>Nodos rama</span><strong>{{ drawing.branches() }}</strong></div>
-    <div class="metric"><span>Grado máx.</span><strong>{{ drawing.max_degree() }}</strong></div>
-    <div class="metric"><span>Orden</span><strong>{{ drawing.order }}</strong></div>
+    {{ metric("crown", "Raíz", drawing.root_label()) }}
+    {{ metric("height", "Altura", drawing.tree_height()) }}
+    {% if drawing.root %}{% set levels = "0 – " ~ drawing.max_depth %}{% else %}{% set levels = "—" %}{% endif %}
+    {{ metric("layers", "Niveles", levels) }}
+    {{ metric("weight", "Peso", drawing.weight()) }}
+    {{ metric("leaf", "Hojas", drawing.leaves()) }}
+    {{ metric("branch", "Nodos rama", drawing.branches()) }}
+    {{ metric("share", "Grado máx.", drawing.max_degree()) }}
+    {{ metric("hash", "Orden", drawing.order) }}
   </div>
 {% endmacro %}
 
@@ -26,12 +34,15 @@
 
 <section class="card tree-card">
   <div class="tree-card-head">
-    <div>
-      <span class="kind-tag">Árbol AVL · O(log n)</span>
-      <h2>{{ avl.title }}</h2>
-      <p class="muted small">Clave: documento de identidad. Se rebalancea con rotaciones aunque las cédulas lleguen ordenadas. Recorrido inorden = pacientes ordenados por documento.</p>
+    <div class="tree-title">
+      <span class="kpi-icon">{{ icon("id") }}</span>
+      <div>
+        <span class="eyebrow">Árbol AVL · O(log n)</span>
+        <h2>{{ avl.title }}</h2>
+        <p class="muted small">Clave: documento de identidad. Se rebalancea con rotaciones aunque las cédulas lleguen ordenadas. Recorrido inorden = pacientes ordenados por documento.</p>
+      </div>
     </div>
-    <div class="rotations"><strong>{{ service.registry.rotations_count }}</strong><span>rotaciones</span></div>
+    <div class="rotations">{{ icon("rotate") }}<strong>{{ service.registry.rotations_count }}</strong><span>rotaciones</span></div>
   </div>
   {{ metrics(avl) }}
   {{ tree_svg(avl) }}
@@ -39,10 +50,13 @@
 
 <section class="card tree-card">
   <div class="tree-card-head">
-    <div>
-      <span class="kind-tag">Árbol binario de búsqueda de prioridad</span>
-      <h2>{{ queue_tree.title }}</h2>
-      <p class="muted small">Clave compuesta (nivel de triage, número de llegada). El nodo más a la izquierda es el próximo a atender; el punto de color indica el nivel.</p>
+    <div class="tree-title">
+      <span class="kpi-icon">{{ icon("clock") }}</span>
+      <div>
+        <span class="eyebrow">Árbol binario de búsqueda de prioridad</span>
+        <h2>{{ queue_tree.title }}</h2>
+        <p class="muted small">Clave compuesta (nivel de triage, número de llegada). El nodo más a la izquierda es el próximo a atender; el punto de color indica el nivel.</p>
+      </div>
     </div>
   </div>
   {{ metrics(queue_tree) }}
@@ -51,10 +65,13 @@
 
 <section class="card tree-card">
   <div class="tree-card-head">
-    <div>
-      <span class="kind-tag">Árbol de decisión binario</span>
-      <h2>{{ decision.title }}</h2>
-      <p class="muted small">Cada nodo interno es una pregunta (izquierda = Sí, derecha = No); cada hoja es un nivel del triage Manchester. Pase el cursor sobre un nodo para ver la pregunta.</p>
+    <div class="tree-title">
+      <span class="kpi-icon">{{ icon("stethoscope") }}</span>
+      <div>
+        <span class="eyebrow">Árbol de decisión binario</span>
+        <h2>{{ decision.title }}</h2>
+        <p class="muted small">Cada nodo interno es una pregunta (izquierda = Sí, derecha = No); cada hoja es un nivel del triage Manchester. Pase el cursor sobre un nodo para ver la pregunta.</p>
+      </div>
     </div>
   </div>
   {{ metrics(decision) }}
@@ -63,10 +80,13 @@
 
 <section class="card tree-card">
   <div class="tree-card-head">
-    <div>
-      <span class="kind-tag">Árbol n-ario · primer hijo / siguiente hermano</span>
-      <h2>{{ hospital_tree.title }}</h2>
-      <p class="muted small">Hospital → Pisos → Áreas → Camas. Los nodos internos muestran camas ocupadas/total sumadas recursivamente; las camas muestran las iniciales del paciente.</p>
+    <div class="tree-title">
+      <span class="kpi-icon">{{ icon("building") }}</span>
+      <div>
+        <span class="eyebrow">Árbol n-ario · primer hijo / siguiente hermano</span>
+        <h2>{{ hospital_tree.title }}</h2>
+        <p class="muted small">Hospital → Pisos → Áreas → Camas. Los nodos internos muestran camas ocupadas/total sumadas recursivamente; las camas muestran las iniciales del paciente.</p>
+      </div>
     </div>
   </div>
   {{ metrics(hospital_tree) }}

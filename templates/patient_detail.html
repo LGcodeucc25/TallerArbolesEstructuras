@@ -1,78 +1,89 @@
 {% extends "base.html" %}
-{% from "_macros.html" import level_badge, status_pill %}
+{% from "_macros.html" import icon, level_badge, status_pill %}
 {% block title %}{{ patient.full_name }}{% endblock %}
 {% block content %}
 <div class="page-head">
-  <div class="head-patient">
-    <div class="avatar avatar-lg {% if patient.triage_level %}level-bg-{{ patient.triage_level }}{% endif %}">{{ patient.initials() }}</div>
-    <div>
-      <h1>{{ patient.full_name }}</h1>
-      <p class="muted">CC {{ patient.document_id }} · {{ patient.age }} años · Ingreso n.º {{ patient.visits }}</p>
-    </div>
-  </div>
+  <a class="btn btn-secondary" href="{{ url_for('patients') }}">{{ icon("arrow-left") }} Pacientes</a>
   <div class="head-actions">
-    <a class="btn btn-ghost" href="{{ url_for('patients') }}">← Pacientes</a>
     {% if patient.status == STATUS_TRIAGE %}
-      <a class="btn btn-primary" href="{{ url_for('triage', document_id=patient.document_id, node_id=patient.triage_node_id) }}">Continuar triage</a>
+      <a class="btn btn-primary" href="{{ url_for('triage', document_id=patient.document_id, node_id=patient.triage_node_id) }}">{{ icon("stethoscope") }} Continuar triage</a>
     {% elif patient.status == STATUS_IN_CARE %}
       <form method="post" action="{{ url_for('discharge', document_id=patient.document_id) }}">
-        <button class="btn btn-danger" type="submit">Dar de alta</button>
+        <button class="btn btn-danger" type="submit">{{ icon("logout") }} Dar de alta</button>
       </form>
     {% elif patient.status == STATUS_DISCHARGED %}
-      <a class="btn btn-primary" href="{{ url_for('admit', document_id=patient.document_id) }}">Nuevo ingreso</a>
+      <a class="btn btn-primary" href="{{ url_for('admit', document_id=patient.document_id) }}">{{ icon("user-plus") }} Nuevo ingreso</a>
     {% endif %}
   </div>
 </div>
 
-<div class="grid-3">
-  <div class="card stat-card {% if patient.triage_level %}level-border-{{ patient.triage_level }}{% endif %}">
-    <span class="muted small">Nivel de triage</span>
-    {{ level_badge(patient.level()) }}
-    {% if patient.level() %}<span class="small">{{ patient.level().label }} · {{ patient.level().max_wait_text }}</span>{% endif %}
-  </div>
-  <div class="card stat-card">
-    <span class="muted small">Estado</span>
-    {{ status_pill(patient) }}
-    <span class="small">Llegada {{ patient.arrival_time.strftime('%H:%M') }} · hace {{ patient.wait_text() }}</span>
-  </div>
-  <div class="card stat-card">
-    <span class="muted small">Cama asignada</span>
-    {% if bed %}
-      <strong class="bed-name">{{ bed.name }}</strong>
-      <span class="small">{{ bed_path }}</span>
-    {% else %}
-      <strong class="bed-name">—</strong>
-      <span class="small muted">Sin cama asignada</span>
-    {% endif %}
-  </div>
-</div>
+<div class="record">
+  <section class="card record-profile {% if patient.triage_level %}level-border-{{ patient.triage_level }}{% endif %}">
+    <div class="profile-top">
+      <div class="avatar avatar-xl">{{ patient.initials() }}</div>
+      <h1>{{ patient.full_name }}</h1>
+      <span class="muted">CC {{ patient.document_id }}</span>
+      <div class="profile-tags">{{ level_badge(patient.level()) }} {{ status_pill(patient) }}</div>
+    </div>
+    <h2 class="section-label">{{ icon("id", "title-icon") }} Datos personales</h2>
+    <dl class="info-list">
+      <div><dt>Documento</dt><dd class="num">{{ patient.document_id }}</dd></div>
+      <div><dt>Edad</dt><dd>{{ patient.age }} años{% if patient.age < 14 %} · pediátrico{% endif %}</dd></div>
+      <div><dt>Ingreso n.º</dt><dd>{{ patient.visits }}</dd></div>
+      <div><dt>Llegada</dt><dd>#{{ patient.arrival_number }} · {{ patient.arrival_time.strftime('%H:%M') }}</dd></div>
+    </dl>
+  </section>
 
-<div class="grid-2">
-  <section class="card">
-    <h2>Motivo de consulta</h2>
-    <p>{{ patient.symptoms }}</p>
-  </section>
-  <section class="card">
-    <h2>Recorrido en el árbol de triage</h2>
-    {% if patient.first_step %}
-      <ol class="path">
-        {% for item in patient.path_steps() %}
-          <li class="path-item">
-            <span class="path-node">{{ item.node_id }}</span>
-            <span class="path-text">{{ item.text }}</span>
-            <span class="answer answer-{{ item.answer }}">{% if item.answer == 'yes' %}Sí{% else %}No{% endif %}</span>
-          </li>
-        {% endfor %}
-        {% if patient.level() %}
-          <li class="path-item path-result">
-            <span class="path-node">{{ patient.triage_node_id }}</span>
-            <span class="path-text">Hoja: Nivel {{ patient.triage_level }} · {{ patient.level().name }}</span>
-          </li>
-        {% endif %}
-      </ol>
-    {% else %}
-      <p class="muted">El paciente aún no ha respondido el triage.</p>
-    {% endif %}
-  </section>
+  <div class="record-main">
+    <section class="card">
+      <h2>{{ icon("stethoscope", "title-icon") }} Atención</h2>
+      <div class="care-grid">
+        <div class="care-item">
+          <span class="care-icon">{{ icon("pulse") }}</span>
+          <div><span class="label">Nivel de triage</span>
+            {% if patient.level() %}<strong>N{{ patient.triage_level }} · {{ patient.level().name }}</strong><span class="muted small">{{ patient.level().label }} · {{ patient.level().max_wait_text }}</span>{% else %}<strong>Sin clasificar</strong>{% endif %}
+          </div>
+        </div>
+        <div class="care-item">
+          <span class="care-icon">{{ icon("clock") }}</span>
+          <div><span class="label">Tiempo desde la llegada</span><strong>{{ patient.wait_text() }}</strong><span class="muted small">{{ patient.status_label() }}</span></div>
+        </div>
+        <div class="care-item">
+          <span class="care-icon">{{ icon("bed") }}</span>
+          <div><span class="label">Cama asignada</span>
+            {% if bed %}<strong>{{ bed.name }}</strong><span class="muted small">{{ bed_path }}</span>{% else %}<strong>—</strong><span class="muted small">Sin cama asignada</span>{% endif %}
+          </div>
+        </div>
+      </div>
+      <div class="symptoms-box">
+        {{ icon("notes") }}
+        <div><span class="label">Motivo de consulta</span><p>{{ patient.symptoms }}</p></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>{{ icon("map-pin", "title-icon") }} Recorrido en el árbol de triage</h2>
+      {% if patient.first_step %}
+        <ol class="path">
+          {% for item in patient.path_steps() %}
+            <li class="path-item">
+              <span class="path-node">{{ item.node_id }}</span>
+              <span class="path-text">{{ item.text }}</span>
+              <span class="answer answer-{{ item.answer }}">{% if item.answer == 'yes' %}Sí{% else %}No{% endif %}</span>
+            </li>
+          {% endfor %}
+          {% if patient.level() %}
+            <li class="path-item path-result">
+              <span class="path-node">{{ patient.triage_node_id }}</span>
+              <span class="path-text">Hoja: Nivel {{ patient.triage_level }} · {{ patient.level().name }}</span>
+              {{ level_badge(patient.level()) }}
+            </li>
+          {% endif %}
+        </ol>
+      {% else %}
+        <p class="muted">El paciente aún no ha respondido el triage.</p>
+      {% endif %}
+    </section>
+  </div>
 </div>
 {% endblock %}

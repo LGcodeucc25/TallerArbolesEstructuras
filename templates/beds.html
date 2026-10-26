@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "_macros.html" import icon %}
 {% block title %}Mapa de camas{% endblock %}
 {% block content %}
 {% set root = hospital.root %}
@@ -16,14 +17,19 @@
 
 <section class="card hospital-card">
   <div class="hospital-head">
-    <div>
-      <span class="kind-tag">Hospital · nivel {{ hospital.level_of(root) }}</span>
-      <h2>{{ root.name }}</h2>
+    <div class="hospital-name">
+      <span class="kpi-icon">{{ icon("building") }}</span>
+      <div>
+        <span class="eyebrow">Hospital · nivel {{ hospital.level_of(root) }}</span>
+        <h2>{{ root.name }}</h2>
+      </div>
     </div>
     <div class="occ-summary">
-      <span class="occ-value">{{ hospital.count_occupied(root) }}/{{ hospital.count_beds(root) }}</span>
-      <div class="bar"><span class="bar-fill {% if root_pct >= 80 %}bar-high{% elif root_pct >= 50 %}bar-mid{% endif %}" style="width: {{ root_pct }}%"></span></div>
-      <span class="muted small">{{ root_pct }}% de ocupación</span>
+      <span class="occ-value">{{ hospital.count_occupied(root) }}<small>/{{ hospital.count_beds(root) }}</small></span>
+      <div class="occ-bar">
+        <div class="bar"><span class="bar-fill {% if root_pct >= 80 %}bar-high{% endif %}" style="width: {{ root_pct }}%"></span></div>
+        <span class="muted small">{{ root_pct }}% de ocupación</span>
+      </div>
     </div>
   </div>
 
@@ -32,10 +38,11 @@
     <details class="floor" open>
       <summary>
         <span class="chevron"></span>
-        <span class="kind-tag">Piso · nivel {{ hospital.level_of(floor) }}</span>
+        <span class="floor-icon">{{ icon("layers") }}</span>
         <strong>{{ floor.name }}</strong>
+        <span class="eyebrow">nivel {{ hospital.level_of(floor) }}</span>
         <span class="summary-bar">
-          <span class="bar"><span class="bar-fill {% if floor_pct >= 80 %}bar-high{% elif floor_pct >= 50 %}bar-mid{% endif %}" style="width: {{ floor_pct }}%"></span></span>
+          <span class="bar"><span class="bar-fill {% if floor_pct >= 80 %}bar-high{% endif %}" style="width: {{ floor_pct }}%"></span></span>
           <span class="small">{{ hospital.count_occupied(floor) }}/{{ hospital.count_beds(floor) }} · {{ floor_pct }}%</span>
         </span>
       </summary>
@@ -47,22 +54,22 @@
               <span class="chevron"></span>
               <strong>{{ area.name }}</strong>
               <span class="summary-bar">
-                <span class="bar"><span class="bar-fill {% if area_pct >= 80 %}bar-high{% elif area_pct >= 50 %}bar-mid{% endif %}" style="width: {{ area_pct }}%"></span></span>
+                <span class="bar"><span class="bar-fill {% if area_pct >= 80 %}bar-high{% endif %}" style="width: {{ area_pct }}%"></span></span>
                 <span class="small">{{ hospital.count_occupied(area) }}/{{ hospital.count_beds(area) }}</span>
               </span>
             </summary>
             <div class="bed-grid">
               {% for bed in hospital.children(area) %}
                 {% if bed.patient %}
-                  <a class="bed bed-busy" href="{{ url_for('patient_detail', document_id=bed.patient.document_id) }}" title="{{ bed.patient.full_name }}">
+                  <a class="bed bed-busy level-top-{{ bed.patient.triage_level }}" href="{{ url_for('patient_detail', document_id=bed.patient.document_id) }}" title="{{ bed.patient.full_name }}">
                     <span class="bed-code">{{ bed.name }}</span>
-                    <span class="bed-initials level-bg-{{ bed.patient.triage_level }}">{{ bed.patient.initials() }}</span>
+                    <span class="avatar">{{ bed.patient.initials() }}</span>
                     <span class="bed-patient">{{ bed.patient.short_name() }}</span>
                   </a>
                 {% else %}
                   <div class="bed bed-free">
                     <span class="bed-code">{{ bed.name }}</span>
-                    <svg viewBox="0 0 24 24"><path d="M3 18V7M3 14h18v4M21 14v-2a3 3 0 0 0-3-3h-7v5"/><circle cx="7" cy="11" r="2"/></svg>
+                    {{ icon("bed", "bed-icon") }}
                     <span class="bed-patient">Libre</span>
                   </div>
                 {% endif %}

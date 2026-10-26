@@ -1,54 +1,54 @@
 {% extends "base.html" %}
-{% from "_macros.html" import level_badge, tree_svg, tree_legend %}
+{% from "_macros.html" import icon, tree_svg, tree_legend %}
 {% block title %}Triage{% endblock %}
 {% block content %}
 <div class="page-head">
-  <div>
-    <h1>Triage guiado</h1>
-    <p class="muted">{{ patient.full_name }} · CC {{ patient.document_id }} · {{ patient.age }} años · Llegada #{{ patient.arrival_number }}</p>
+  <div class="head-patient">
+    <div class="avatar avatar-lg">{{ patient.initials() }}</div>
+    <div>
+      <span class="eyebrow">Paso 2 de 3 · Triage guiado</span>
+      <h1>{{ patient.full_name }}</h1>
+      <p class="muted">CC {{ patient.document_id }} · {{ patient.age }} años · Llegada #{{ patient.arrival_number }}</p>
+    </div>
   </div>
-  <a class="btn btn-ghost" href="{{ url_for('patient_detail', document_id=patient.document_id) }}">Ver ficha</a>
+  <a class="btn btn-secondary" href="{{ url_for('patient_detail', document_id=patient.document_id) }}">{{ icon("folder") }} Ver ficha</a>
 </div>
 
 <div class="triage-layout">
   {% if node.is_leaf() %}
     {% set level = level_info(node.result_level) %}
     <section class="card triage-card triage-result level-border-{{ level.number }}">
-      <span class="triage-step">Clasificación completada</span>
+      <span class="eyebrow">Clasificación completada</span>
       <div class="result-circle level-bg-{{ level.number }}">{{ level.number }}</div>
       <h2 class="triage-question">Nivel {{ level.number }} · {{ level.name }}</h2>
       <p class="result-label">{{ level.label }} — tiempo máximo de atención: <strong>{{ level.max_wait_text }}</strong></p>
       <p class="muted">El paciente ingresó a la cola de prioridad. Estado actual: {{ patient.status_label() }}.</p>
       <div class="triage-actions">
-        <a class="btn btn-ghost btn-lg" href="{{ url_for('admit') }}">Nuevo ingreso</a>
-        <a class="btn btn-primary btn-lg" href="{{ url_for('queue') }}">Ir a la cola de atención →</a>
+        <a class="btn btn-secondary btn-lg" href="{{ url_for('admit') }}">{{ icon("user-plus") }} Nuevo ingreso</a>
+        <a class="btn btn-primary btn-lg" href="{{ url_for('queue') }}">{{ icon("clock") }} Ir a la cola</a>
       </div>
     </section>
   {% else %}
     <section class="card triage-card">
       <div class="progress-head">
-        <span class="triage-step">Pregunta {{ step }} · nodo {{ node.node_id }}</span>
+        <span class="eyebrow">Pregunta {{ step }} · nodo {{ node.node_id }}</span>
         <span class="muted small">Máximo {{ total_steps }} preguntas</span>
       </div>
       <div class="progress"><span style="width: {{ (step - 1) * 100 // total_steps }}%"></span></div>
       <div class="symptoms-box">
-        <span class="muted small">Motivo de consulta</span>
-        <p>{{ patient.symptoms }}</p>
+        {{ icon("notes") }}
+        <div><span class="label">Motivo de consulta</span><p>{{ patient.symptoms }}</p></div>
       </div>
       <h2 class="triage-question">{{ node.question }}</h2>
       <form method="post" action="{{ url_for('triage_answer', document_id=patient.document_id, node_id=node.node_id) }}" class="triage-actions">
-        <button class="btn btn-yes btn-xl" type="submit" name="answer" value="yes">
-          <svg viewBox="0 0 24 24"><path d="M5 12l5 5 9-10"/></svg> Sí
-        </button>
-        <button class="btn btn-no btn-xl" type="submit" name="answer" value="no">
-          <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg> No
-        </button>
+        <button class="btn btn-primary btn-xl" type="submit" name="answer" value="yes">{{ icon("check") }} Sí</button>
+        <button class="btn btn-secondary btn-xl" type="submit" name="answer" value="no">{{ icon("x") }} No</button>
       </form>
     </section>
   {% endif %}
 
   <aside class="card">
-    <h2>Camino recorrido</h2>
+    <h2>{{ icon("map-pin", "title-icon") }} Camino recorrido</h2>
     {% if patient.first_step %}
       <ol class="path">
         {% for item in patient.path_steps() %}
@@ -67,9 +67,10 @@
 
 <section class="card">
   <div class="card-head">
-    <h2>Árbol de decisión (nodos visitados resaltados)</h2>
+    <h2>{{ icon("tree", "title-icon") }} Árbol de decisión</h2>
     {{ tree_legend() }}
   </div>
+  <p class="muted small">Los nodos visitados se resaltan con borde oscuro.</p>
   {{ tree_svg(drawing) }}
 </section>
 {% endblock %}
